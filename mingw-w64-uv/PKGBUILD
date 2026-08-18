@@ -6,7 +6,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
          "${MINGW_PACKAGE_PREFIX}-python-${_realname}"
          "${MINGW_PACKAGE_PREFIX}-python-${_realname}-build")
 pkgver=0.12.5
-pkgrel=1
+pkgrel=2
 pkgdesc='An extremely fast Python package installer and resolver, written in Rust (mingw-w64)'
 arch=('any')
 mingw_arch=('mingw64' 'ucrt64' 'clang64' 'clangarm64')
@@ -31,15 +31,22 @@ makedepends=("${MINGW_PACKAGE_PREFIX}-rust"
 options=('!strip')
 source=("git+${url}.git#tag=${pkgver}"
         "zstd-sys.tar.gz::https://static.crates.io/crates/zstd-sys/2.0.16+zstd.1.5.7/download"
-        "link-zstd-dynamically.patch")
+        "link-zstd-dynamically.patch"
+        "support-mingw-python.patch")
 sha256sums=('29f5740dcbb6d932cdbbed3a3946ac79d921772a0c62a8c8da04ecc0ec90b8d5'
             '91e19ebc2adc8f83e43039e79776e3fda8ca919132d68a1fed6a5faca2683748'
-            '48f4900ceb02d3aaf9a1020f33d56629156e96759f456c0e7ca18bfcf910767b')
+            '48f4900ceb02d3aaf9a1020f33d56629156e96759f456c0e7ca18bfcf910767b'
+            '84de598dc83d8d46b387c6dff24ffb51a80bbf75c58a1187479dd7b303608a33')
 
 prepare() {
   cd "${_realname}"
 
   patch -d "../zstd-sys-2.0.16+zstd.1.5.7" -i "../link-zstd-dynamically.patch"
+
+  # Teach uv to recognise a MinGW CPython. Without this, uv refuses this
+  # environment's own Python with "Unknown operating system:
+  # mingw_x86_64_ucrt_gnu". See https://github.com/astral-sh/uv/issues/3573
+  patch -p1 -i "../support-mingw-python.patch"
   cat >> Cargo.toml <<END
 
 [patch.crates-io]
